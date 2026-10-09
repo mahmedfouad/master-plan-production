@@ -22,7 +22,7 @@ def load_hf_model():
     return keras.saving.load_model(model_path)
 
 st.set_page_config(page_title="Image Classification Dashboard", layout="wide")
-st.title("📸 Master Plan Production Classifier")
+st.title("📸 Master Plan Classifier")
 st.write("Upload your images below to check if they are **Valid** or **Invalid**.")
 
 try:
@@ -60,7 +60,7 @@ if uploaded_files:
         raw_prob = float(prediction[0][0])
         
         # Binary Classification Logic: 0 = Invalid, 1 = Valid
-        if raw_prob >= 0.5:
+        if raw_prob >= 0.7:
             classification = "valid"
             confidence = raw_prob
             valid_images.append(file)
@@ -72,7 +72,7 @@ if uploaded_files:
         results.append({
             "Image Name": file.name,
             "Classification": classification,
-            "Confidence": f"{confidence:.2%}"
+            "Confidence": f"{confidence:.0%}"
         })
         
         progress_bar.progress((i + 1) / len(uploaded_files))
