@@ -27,7 +27,7 @@ st.write("Upload your images below to check if they are **Valid** or **Invalid**
 
 try:
     model = load_hf_model()
-    st.success("Model loaded successfully from Hugging Face!")
+    st.success("Model loaded successfully!")
 except Exception as e:
     st.error(f"Error loading model: {e}")
     st.stop()
