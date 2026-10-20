@@ -53,7 +53,7 @@ if uploaded_files:
         img_array = np.expand_dims(img_array, axis=0)
         
         # Match training notebook normalization: scale pixels to [0,1]
-        img_array = img_array / 255.0
+        #img_array = img_array / 255.0
 
         # Predict (Returns probability map for binary classification)
         prediction = model.predict(img_array, verbose=0)
