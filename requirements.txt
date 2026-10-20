@@ -1,6 +1,6 @@
 streamlit
-tensorflow
-keras
-huggingface_hub
+tensorflow-cpu==<your-training-version>
+#keras
+huggingface_hub 
 Pillow
 numpy
