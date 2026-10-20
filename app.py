@@ -60,7 +60,7 @@ if uploaded_files:
         raw_prob = float(prediction[0][0])
         
         # Binary Classification Logic: 0 = Invalid, 1 = Valid
-        if raw_prob >= 0.7:
+        if raw_prob >= 0.5:
             classification = "valid"
             confidence = raw_prob
             valid_images.append(file)
