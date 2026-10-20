@@ -38,7 +38,7 @@ except Exception as e:
 st.caption(f"App version: {APP_VERSION}")
 try:
     info = HfApi().model_info(HF_REPO_ID)
-    st.caption(f"Model last updated on Hugging Face: {info.lastModified}")
+    st.caption(f"Model last updated: {info.lastModified}") # last updated time on  Hugging Face
 except Exception as e:
     st.caption(f"(Could not read model update time: {e})")
 # ===========================================================================
