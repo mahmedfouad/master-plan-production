@@ -1,4 +1,3 @@
-# model version: 2025-10-21
 import streamlit as st
 import os
 import io
@@ -6,20 +5,22 @@ import zipfile
 import numpy as np
 from PIL import Image
 
+# ===== VISIBLE VERSION MARKER: bump this every retrain =====
+APP_VERSION = "2025-10-21"
+# ===========================================================
+
 # Set Keras backend to tensorflow before importing Keras
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
-from huggingface_hub import hf_hub_download  # <--- Import this tool
+from huggingface_hub import hf_hub_download, HfApi   # HfApi -> read model update time
+
+HF_REPO_ID = "ahmedkindi/master-plan-production"
+HF_FILENAME = "best_mp_model.keras"
 
 # 1. Load the model from Hugging Face (cached so it only downloads once)
-# 1. Load the model cleanly using Hugging Face's explicit downloader
 @st.cache_resource
 def load_hf_model():
-    # Explicitly downloads your targeted model file from the repository
-    model_path = hf_hub_download(
-        repo_id="ahmedkindi/master-plan-production", 
-        filename="best_mp_model.keras"  # Ensure this filename exactly matches what you uploaded to HF!
-    )
+    model_path = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_FILENAME)
     return keras.saving.load_model(model_path)
 
 st.set_page_config(page_title="Image Classification Dashboard", layout="wide")
@@ -32,7 +33,16 @@ try:
 except Exception as e:
     st.error(f"Error loading model: {e}")
     st.stop()
-    
+
+# ===== VISIBLE VERIFICATION: app version + model's HF last-updated time =====
+st.caption(f"App version: {APP_VERSION}")
+try:
+    info = HfApi().model_info(HF_REPO_ID)
+    st.caption(f"Model last updated on Hugging Face: {info.lastModified}")
+except Exception as e:
+    st.caption(f"(Could not read model update time: {e})")
+# ===========================================================================
+
 # 2. File uploader for multiple images
 uploaded_files = st.file_uploader("Choose images...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -43,24 +53,17 @@ if uploaded_files:
 
     st.subheader("Processing Images...")
     progress_bar = st.progress(0)
-    
+
     for i, file in enumerate(uploaded_files):
-        # Read and preprocess the image (Converting to RGB as per training notebook)
         image = Image.open(file).convert('RGB')
-        
-        # Match training input: Resize to 128x128
-        img_resized = image.resize((128, 128)) 
+        img_resized = image.resize((128, 128))
         img_array = keras.utils.img_to_array(img_resized)
         img_array = np.expand_dims(img_array, axis=0)
-        
-        # Match training notebook normalization: scale pixels to [0,1]
-        #img_array = img_array / 255.0
+        # NOTE: no /255 here. The model has MobileNetV2 scaling baked in.
 
-        # Predict (Returns probability map for binary classification)
         prediction = model.predict(img_array, verbose=0)
         raw_prob = float(prediction[0][0])
-        
-        # Binary Classification Logic: 0 = Invalid, 1 = Valid
+
         if raw_prob >= 0.5:
             classification = "valid"
             confidence = raw_prob
@@ -69,20 +72,18 @@ if uploaded_files:
             classification = "invalid"
             confidence = 1.0 - raw_prob
             invalid_images.append(file)
-            
+
         results.append({
             "Image Name": file.name,
             "Classification": classification,
             "Confidence": f"{confidence*100:.0f}%"
         })
-        
+
         progress_bar.progress((i + 1) / len(uploaded_files))
 
-    # 3. Display Results Table
     st.subheader("📋 Classification Results")
     st.dataframe(results, use_container_width=True)
 
-    # 4. Download Buttons (Zip Creator)
     st.subheader("📦 Download Sorted Images")
     col1, col2 = st.columns(2)
 
@@ -93,13 +94,12 @@ if uploaded_files:
                 for f in valid_images:
                     z.writestr(f.name, f.getvalue())
             valid_zip.seek(0)
-            
             st.download_button(
                 label="🟢 Download Valid Images",
                 data=valid_zip,
                 file_name="valid_images.zip",
                 mime="application/zip",
-                type="primary"
+                type="primary",
             )
         else:
             st.info("No valid images found to download.")
@@ -111,13 +111,12 @@ if uploaded_files:
                 for f in invalid_images:
                     z.writestr(f.name, f.getvalue())
             invalid_zip.seek(0)
-            
             st.download_button(
                 label="🔴 Download Invalid Images",
                 data=invalid_zip,
                 file_name="invalid_images.zip",
                 mime="application/zip",
-                type="secondary"
+                type="secondary",
             )
         else:
             st.info("No invalid images found to download.")
