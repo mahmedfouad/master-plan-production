@@ -72,7 +72,7 @@ if uploaded_files:
         results.append({
             "Image Name": file.name,
             "Classification": classification,
-            "Confidence": f"{confidence:.0f}%"
+            "Confidence": f"{confidence*100:.0f}%"
         })
         
         progress_bar.progress((i + 1) / len(uploaded_files))
